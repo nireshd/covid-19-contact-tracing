@@ -1,6 +1,5 @@
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
-
 import pandas as pd
 pd.options.mode.chained_assignment = None
 import numpy as np
@@ -9,25 +8,18 @@ import json
 from time import time
 import haversine
 
-
 def intersections(filename, cluster_filename):
     
     
     data = pd.read_json(filename)
-    print("{}\n".format(filename))
-    #print("User Frame:\n {} \n".format(str(data)))
+    #print("{}\n".format(filename))
 
-    
     data = dm.pandas.series_to_columns(data, "timelineObjects")
     data = data[data.placeVisit.notna()]
     data = data.drop(columns = ['activitySegment'])
     
     cluster_data = pd.read_csv(cluster_filename)
-    #print("Cluster Frame:\n {} \n".format(str(cluster_data)))
-    #print(cluster_data)
-    
 
-    
     lats = []
     lngs = []
     start_timestamps = []
@@ -50,10 +42,7 @@ def intersections(filename, cluster_filename):
         'start_time': start_timestamps,
         'end_time': end_timestamps})
     user_frame.to_csv("user_frame.csv", index = False)
-    #print("User Frame :\n{} \n".format(user_frame))
-    
-    #perform the matching
-    #match_frame = pd.DataFrame(columns = list(cluster_data))
+
     user_match_frame = pd.DataFrame(columns = list(user_frame)+['matched_id'])
     matched_id = []
     for i in range(len(cluster_data)):
@@ -67,7 +56,6 @@ def intersections(filename, cluster_filename):
         user_match_frame = user_match_frame.append(cut2)
         
     
-    #print(user_match_frame)    
     if len(user_match_frame)>0:
         distances = []
         for j in range(len(user_match_frame)):
@@ -77,7 +65,6 @@ def intersections(filename, cluster_filename):
                 haversine.haversine(
                 [user_match_frame.iloc[j].latitude,user_match_frame.iloc[j].longitude],
                 [matched_cluster_item.iloc[0].latitude,matched_cluster_item.iloc[0].longitude]),4)
-            #print(distance)
             distances.append(distance)
         user_match_frame['distance'] = distances
         user_match_frame=user_match_frame[user_match_frame.distance<=0.1]
@@ -85,18 +72,13 @@ def intersections(filename, cluster_filename):
     if len(user_match_frame)>0:
         print("User logs matched: ")
         print(user_match_frame)
-        #user_match_frame.to_csv("user_match_frame.csv", index = False)
         print("\n")
         
         print("Cluster tag matched: ")
         matched_cluster_frame = cluster_data[cluster_data.id_tag.isin(user_match_frame.matched_id)]
-        #matched_cluster_frame.to_csv("matched_cluster_frame.csv", index = False)
         print(matched_cluster_frame)
         print("\n")
-        
-        #return(user_match_frame, matched_cluster_frame)
-        
-        
+
     else:
         print("No known intersections")
         matched_cluster_frame = pd.DataFrame(columns=list(cluster_data))
